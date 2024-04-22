@@ -1,0 +1,31 @@
+# permissions for end users to edit cronvpas.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: cronvpa-editor-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: kubernetes-cronvpa-controller
+    app.kubernetes.io/part-of: kubernetes-cronvpa-controller
+    app.kubernetes.io/managed-by: kustomize
+  name: cronvpa-editor-role
+rules:
+- apiGroups:
+  - autoscaling.bogo.ac.cn.cronvpa.bogo.ac.cn
+  resources:
+  - cronvpas
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - autoscaling.bogo.ac.cn.cronvpa.bogo.ac.cn
+  resources:
+  - cronvpas/status
+  verbs:
+  - get

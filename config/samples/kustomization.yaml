@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- autoscaling.bogo.ac.cn_v1beta1_cronvpa.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples
