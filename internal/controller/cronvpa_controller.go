@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	autoscalingv1beta1 "github.com/bogo-y/kubernetes-cronvpa-controller/api/v1beta1"
+	"github.com/bogo-y/kubernetes-cronvpa-controller/internal/observe"
 	"github.com/google/uuid"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -124,6 +125,10 @@ func (r *CronvpaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	go func(m *Manager, stopChan chan struct{}) {
 		m.Run(stopChan)
 		<-stopChan
+	}(r.manager, stopChan)
+	go func(cronManager *Manager, stopChan chan struct{}) {
+		server := observe.NewWebServer(cronManager)
+		server.Serve()
 	}(r.manager, stopChan)
 	return nil
 }

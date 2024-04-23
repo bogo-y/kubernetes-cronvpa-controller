@@ -16,7 +16,7 @@ import (
 )
 
 type Manager struct {
-	executor cronjob.Executor
+	Executor cronjob.Executor
 	client   client.Client
 	mv       sync.Mutex
 	v2j      map[types.UID]map[string]interface{}
@@ -36,7 +36,7 @@ func NewManager(client client.Client) *Manager {
 		v2j:    make(map[types.UID]map[string]interface{}),
 		j2v:    make(map[string]*JobInfo),
 	}
-	m.executor = cronjob.NewExecutorImpl(nil, m.JobResultHandler)
+	m.Executor = cronjob.NewExecutorImpl(nil, m.JobResultHandler)
 	cronjob.SetClient(client)
 	return &m
 }
@@ -52,7 +52,7 @@ func (m *Manager) setJob(vid types.UID, cond *v1beta1.Condition, ref *v1beta1.Ta
 	if err != nil {
 		return err
 	}
-	err = m.executor.AddJob(job)
+	err = m.Executor.AddJob(job)
 	if err != nil {
 		return err
 	}
@@ -82,7 +82,7 @@ func (m *Manager) autoRemove(vid types.UID, conds []v1beta1.Condition) {
 			}
 		}
 		if flag == false {
-			m.executor.RemoveByID(jid)
+			m.Executor.RemoveByID(jid)
 			delete(m.v2j[vid], jid)
 		}
 	}
@@ -170,7 +170,7 @@ func (m *Manager) GC() {
 	observe.KubeSubmittedJobsInCronEngineTotal.Set(0)
 	observe.KubeSuccessfulJobsInCronEngineTotal.Set(0)
 	observe.KubeExpiredJobsInCronEngineTotal.Set(0)
-	entry := m.executor.ListJob()
+	entry := m.Executor.ListJob()
 	observe.KubeJobsInCronEngineTotal.Set(float64(len(entry)))
 	current := make([]string, 0, len(entry))
 	for _, e := range entry {
@@ -192,11 +192,11 @@ func (m *Manager) GC() {
 		}
 	}
 	for i := range needRemove {
-		m.executor.RemoveByID(needRemove[i])
+		m.Executor.RemoveByID(needRemove[i])
 	}
 }
 func (m *Manager) Run(stopChan chan struct{}) {
-	m.executor.Run()
+	m.Executor.Run()
 	ticker := time.NewTicker(time.Minute * 10)
 	go func() {
 		for {
@@ -208,5 +208,5 @@ func (m *Manager) Run(stopChan chan struct{}) {
 		}
 	}()
 	<-stopChan
-	m.executor.Stop()
+	m.Executor.Stop()
 }

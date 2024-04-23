@@ -46,7 +46,7 @@ func (ce *ExecutorImpl) FindJob(jobID string) (bool, string) {
 			if e.Next.Add(maxOutOfDateTimeout).After(time.Now()) {
 				return true, ""
 			}
-			//log.Warningf("The job %s(job id %s) in cronhpa %s namespace %s is out of date.", jobID)
+			//log.Warningf("The job %s(job id %s) in  %s namespace %s is out of date.", jobID)
 			return false, "JobTimeOut"
 		}
 	}

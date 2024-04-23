@@ -61,13 +61,13 @@ func (cj *JobImpl) Run() (string, error) {
 		instance := &appsv1.Deployment{}
 		err := clt.Get(context.TODO(), cj.targetRef.NamespacedName, instance)
 		if err != nil {
-			return "failed to get workload", err
+			return "failed to get deployment", err
 		}
 		patch := client.MergeFrom(instance.DeepCopy())
 		c := instance.Spec.Template.Spec.Containers
 		found := false
 		for i := range c {
-			if c[i].Name == cj.name {
+			if c[i].Name == cj.containerName {
 				c[i].Resources = cj.targetResources
 				found = true
 				break
@@ -77,6 +77,31 @@ func (cj *JobImpl) Run() (string, error) {
 			return "not found container", err
 		}
 		err = clt.Patch(context.TODO(), instance, patch)
+		if err != nil {
+			return "failed to patch deployment", err
+		}
+		return "success", nil
+	} else if cj.targetRef.GVK.Kind == "Pod" {
+		instance := &v1.Pod{}
+		err := clt.Get(context.TODO(), cj.targetRef.NamespacedName, instance)
+		if err != nil {
+			return "failed to get pod", err
+		}
+		found := false
+		for i := range instance.Spec.Containers {
+			if instance.Spec.Containers[i].Name == cj.containerName {
+				instance.Spec.Containers[i].Resources = cj.targetResources
+				found = true
+				break
+			}
+		}
+		if !found {
+			return "not found container", err
+		}
+		err = clt.Update(context.TODO(), instance)
+		if err != nil {
+			return "failed to update pod", err
+		}
 		return "success", nil
 	} else {
 		return "unsupported workload", errors.New(fmt.Sprintf("unable to scale %s", cj.targetRef.GVK.Kind))
@@ -111,6 +136,13 @@ func (cj *JobImpl) Run() (string, error) {
 //	}
 func JobFactory(vpajob *v1beta1.Condition, ref *v1beta1.TargetRef, namespace string) (CronJob, error) {
 	splited := strings.Split(ref.ApiVersion, "/")
+	var g, v string
+	if len(splited) == 1 {
+		v = splited[0]
+	} else {
+		g = splited[0]
+		v = splited[1]
+	}
 	ret := JobImpl{
 		targetRef: TargetRef{
 			NamespacedName: types.NamespacedName{
@@ -118,8 +150,8 @@ func JobFactory(vpajob *v1beta1.Condition, ref *v1beta1.TargetRef, namespace str
 				Name:      ref.Name,
 			},
 			GVK: schema.GroupVersionKind{
-				Group:   splited[0],
-				Version: splited[1],
+				Group:   g,
+				Version: v,
 				Kind:    ref.Kind,
 			},
 		},
